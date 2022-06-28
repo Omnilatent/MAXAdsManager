@@ -68,7 +68,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                         bannerPosition = MaxSdkBase.BannerPosition.Centered;
                         break;
                 }
-                currentBannerAd = new BannerAdObject(placementType);
+                currentBannerAd = new BannerAdObject(placementType, onAdLoaded);
                 currentBannerAd.State = AdObjectState.Loading;
                 string bannerAdUnitId = MAXAdID.GetAdID(placementType);
 
@@ -107,6 +107,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 if (GetCurrentBannerAd().State != AdObjectState.Closed)
                 {
                     GetCurrentBannerAd().State = AdObjectState.Showing;
+                    GetCurrentBannerAd().onAdLoaded?.Invoke(true);
                     MaxSdk.ShowBanner(MAXAdID.GetAdID(GetCurrentBannerAd().AdPlacementType));
                 }
             });
@@ -119,6 +120,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 if (GetCurrentBannerAd().State != AdObjectState.LoadFailed) //this check is required because AppLovin is calling this method too many times
                 {
                     GetCurrentBannerAd().State = AdObjectState.LoadFailed;
+                    GetCurrentBannerAd().onAdLoaded?.Invoke(false);
                     onBannerAdLoadFailedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, errorInfo);
                 }
             });
