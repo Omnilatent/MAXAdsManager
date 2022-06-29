@@ -11,14 +11,21 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         bool initialized = false;
         InterstitialAdObject currentInterstitialAd;
 
+        /// <summary>
+        /// Self timeout interstitial ad after this duration
+        /// </summary>
+        public static float TIMEOUT_LOADINTERAD_SEC = 10f;
+
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdLoadedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.ErrorInfo> onInterAdLoadFailedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdDisplayedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdClickedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdHiddenEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.ErrorInfo> onInterAdDisplayFailedEvent;
+        public static Action<AdPlacement.Type, string> onInterAdSelfTimeoutEvent; //when ad load timeout by custom duration
 
         static MAXAdsWrapper instance;
+        private Coroutine coTimeoutInterstitial;
 
         private void Awake()
         {
@@ -75,8 +82,13 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 return;
             }
             currentInterstitialAd = new InterstitialAdObject(placementType, onAdLoaded);
+            currentInterstitialAd.State = AdObjectState.Loading;
             string adUnitId = MAXAdID.GetAdID(placementType);
             MaxSdk.LoadInterstitial(adUnitId);
+            if (showLoading)
+            {
+                coTimeoutInterstitial = StartCoroutine(CoTimeoutLoadInterstitial(currentInterstitialAd));
+            }
         }
 
         public void ShowInterstitial(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdClosed)
@@ -90,6 +102,19 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 return;
             }
             onAdClosed?.Invoke(false);
+        }
+
+        IEnumerator CoTimeoutLoadInterstitial(InterstitialAdObject interstitialAdObject)
+        {
+            var delay = new WaitForSeconds(TIMEOUT_LOADINTERAD_SEC);
+            yield return delay;
+            if (interstitialAdObject.State == AdObjectState.Loading)
+            {
+                interstitialAdObject.State = AdObjectState.LoadFailed;
+                interstitialAdObject.onAdLoaded?.Invoke(false);
+                interstitialAdObject.onAdLoaded = null;
+                onInterAdSelfTimeoutEvent?.Invoke(interstitialAdObject.AdPlacementType, "Self Timeout");
+            }
         }
 
         public static void ShowMediationDebugger()
@@ -126,6 +151,12 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 GetCurrentInterAd().State = AdObjectState.LoadFailed;
                 GetCurrentInterAd().onAdLoaded?.Invoke(false);
                 onInterAdLoadFailedEvent?.Invoke(GetCurrentInterAd().AdPlacementType, error);
+
+                if (coTimeoutInterstitial != null)
+                {
+                    StopCoroutine(coTimeoutInterstitial);
+                    coTimeoutInterstitial = null;
+                }
             });
         }
 
