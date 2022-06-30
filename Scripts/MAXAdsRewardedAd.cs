@@ -89,6 +89,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
         private void OnRewardedAdLoadedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
+            QueueMainThreadExecution(() =>
+            {
+                onRewardAdLoadedEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
+            });
         }
 
         private void OnRewardedAdLoadFailedEvent(string adUnitId, MaxSdkBase.ErrorInfo errorInfo)
@@ -109,17 +113,34 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             });
         }
 
-        private void OnRewardedAdClickedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo) { }
+        private void OnRewardedAdClickedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+        {
+            QueueMainThreadExecution(() =>
+            {
+                onRewardAdClickedEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
+            });
+        }
 
         private void OnRewardedAdHiddenEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
+            QueueMainThreadExecution(() =>
+            {
+                RewardResult.Type rewardResultType = RewardResult.Type.Canceled;
+                if (GetCurrentRewardAd().State == AdObjectState.Shown)
+                {
+                    rewardResultType = RewardResult.Type.Finished;
+                }
+                GetCurrentRewardAd().onAdClosed?.Invoke(new RewardResult(rewardResultType));
+                GetCurrentRewardAd().State = AdObjectState.Closed;
+                onRewardAdHiddenEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
+            });
         }
 
         private void OnRewardedAdReceivedRewardEvent(string adUnitId, MaxSdk.Reward reward, MaxSdkBase.AdInfo adInfo)
         {
             QueueMainThreadExecution(() =>
             {
-                GetCurrentRewardAd().onAdClosed?.Invoke(new RewardResult(RewardResult.Type.Finished));
+                //GetCurrentRewardAd().onAdClosed?.Invoke(new RewardResult(RewardResult.Type.Finished));
                 GetCurrentRewardAd().State = AdObjectState.Shown;
                 onRewardAdReceivedRewardEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
             });
@@ -127,7 +148,11 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
         private void OnRewardedAdRevenuePaidEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
-            // Ad revenue paid. Use this callback to track user revenue.
+            QueueMainThreadExecution(() =>
+            {
+                // Ad revenue paid. Use this callback to track user revenue.
+                onRewardAdRevenuePaidEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
+            });
         }
     }
 }
