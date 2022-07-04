@@ -22,6 +22,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdClickedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdHiddenEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.ErrorInfo> onInterAdDisplayFailedEvent;
+        public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdRevenuePaidEvent;
         public static Action<AdPlacement.Type, string> onInterAdSelfTimeoutEvent; //when ad load timeout by custom duration
 
         static MAXAdsWrapper instance;
@@ -131,6 +132,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             MaxSdkCallbacks.Interstitial.OnAdClickedEvent += OnInterstitialClickedEvent;
             MaxSdkCallbacks.Interstitial.OnAdHiddenEvent += OnInterstitialHiddenEvent;
             MaxSdkCallbacks.Interstitial.OnAdDisplayFailedEvent += OnInterstitialAdFailedToDisplayEvent;
+            MaxSdkCallbacks.Interstitial.OnAdRevenuePaidEvent += OnInterstitialAdRevenuePaidEvent;
         }
 
         private void OnInterstitialLoadedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
@@ -193,6 +195,14 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 GetCurrentInterAd().State = AdObjectState.Closed;
                 GetCurrentInterAd().onAdClosed?.Invoke(true);
                 onInterAdHiddenEvent?.Invoke(GetCurrentInterAd().AdPlacementType, adInfo);
+            });
+        }
+
+        private void OnInterstitialAdRevenuePaidEvent(string arg1, MaxSdkBase.AdInfo adInfo)
+        {
+            QueueMainThreadExecution(() =>
+            {
+                onInterAdRevenuePaidEvent?.Invoke(GetCurrentInterAd().AdPlacementType, adInfo);
             });
         }
 
