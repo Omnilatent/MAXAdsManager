@@ -7,6 +7,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 {
     public partial class MAXAdsWrapper : MonoBehaviour, IAdsNetworkHelper
     {
+        [SerializeField] bool initializeAutomatically = true;
         [SerializeField] bool enableVerboseLogging = false;
         bool initialized = false;
         InterstitialAdObject currentInterstitialAd;
@@ -40,10 +41,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 Destroy(gameObject);
                 return;
             }
-            Initialize();
-            InitializeInterstitialAdsCallbacks();
-            InitializeBannerAds();
-            InitializeRewardedAds();
+            if (initializeAutomatically)
+            {
+                Initialize();
+            }
         }
 
         public void Initialize()
@@ -52,6 +53,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             MaxSdkCallbacks.OnSdkInitializedEvent += (MaxSdkBase.SdkConfiguration sdkConfiguration) =>
             {
                 // AppLovin SDK is initialized, start loading ads
+#if ADJUST_SDK && UNITY_IOS
+                //If MAX did not ask for ATT consent then Adjust will ask for ATT consent. Otherwise, update Adjust's consent status
+                AdjustUnity.AdjustWrapper.CheckForNewAttStatus(sdkConfiguration.AppTrackingStatus == MaxSdkBase.AppTrackingStatus.NotDetermined);
+#endif
             };
 
             MaxSdk.SetSdkKey(MAXAdID.SdkKey);
@@ -59,6 +64,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             //MaxSdk.SetUserId("USER_ID");
             MaxSdk.InitializeSdk();
             initialized = true;
+
+            InitializeInterstitialAdsCallbacks();
+            InitializeBannerAds();
+            InitializeRewardedAds();
         }
 
         InterstitialAdObject GetCurrentInterAd(bool createIfNull = true)
@@ -233,7 +242,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 action.Invoke();
             });
 #else
-        action.Invoke();
+            action.Invoke();
 #endif
         }
     }
