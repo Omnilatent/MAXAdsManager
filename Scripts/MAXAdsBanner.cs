@@ -110,6 +110,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                     GetCurrentBannerAd().onAdLoaded?.Invoke(true);
                     MaxSdk.ShowBanner(MAXAdID.GetAdID(GetCurrentBannerAd().AdPlacementType));
                 }
+                onBannerAdLoadedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, adInfo);
             });
         }
 
@@ -126,12 +127,24 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             });
         }
 
-        private void OnBannerAdClickedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo) { }
+        private void OnBannerAdClickedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+        {
+            onBannerAdClickedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, adInfo);
+        }
 
-        private void OnBannerAdRevenuePaidEvent(string adUnitId, MaxSdkBase.AdInfo adInfo) { }
+        private void OnBannerAdRevenuePaidEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+        {
+            onBannerAdRevenuePaidEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, adInfo);
+        }
 
-        private void OnBannerAdExpandedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo) { }
+        private void OnBannerAdExpandedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+        {
+            onBannerAdExpandedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, adInfo);
+        }
 
-        private void OnBannerAdCollapsedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo) { }
+        private void OnBannerAdCollapsedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
+        {
+            onBannerAdCollapsedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, adInfo);
+        }
     }
 }
