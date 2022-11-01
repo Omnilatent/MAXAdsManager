@@ -68,6 +68,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             InitializeInterstitialAdsCallbacks();
             InitializeBannerAds();
             InitializeRewardedAds();
+            InitializeAOAds();
         }
 
         InterstitialAdObject GetCurrentInterAd(bool createIfNull = true)
@@ -215,20 +216,11 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             });
         }
 
-        public void RequestAppOpenAd(AdPlacement.Type placementType, RewardDelegate onAdLoaded = null)
-        {
-            onAdLoaded?.Invoke(new RewardResult(RewardResult.Type.LoadFailed));
-        }
-
         public void RequestInterstitialRewardedNoShow(AdPlacement.Type placementType, RewardDelegate onAdLoaded = null)
         {
             onAdLoaded?.Invoke(new RewardResult(RewardResult.Type.LoadFailed));
         }
 
-        public void ShowAppOpenAd(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdClosed = null)
-        {
-            onAdClosed?.Invoke(false);
-        }
         public void ShowInterstitialRewarded(AdPlacement.Type placementType, RewardDelegate onAdClosed)
         {
             onAdClosed?.Invoke(new RewardResult(RewardResult.Type.LoadFailed));
