@@ -23,7 +23,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public void RequestAppOpenAd(AdPlacement.Type placementType, RewardDelegate onAdLoaded = null)
         {
             currentAppOpenAdPlacement = placementType;
-            if (appOpenAdObject != null)
+            if (appOpenAdObject != null && appOpenAdObject.State == AdObjectState.Ready)
             {
                 onAdLoaded?.Invoke(new RewardResult(RewardResult.Type.Finished));
                 return;
@@ -43,7 +43,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 MaxSdk.ShowAppOpenAd(adUnitId);
                 appOpenAdObject.State = AdObjectState.Showing;
             }
-            onAdClosed?.Invoke();
+            else
+                onAdClosed?.Invoke();
         }
 
         public void InitializeAOAds()
