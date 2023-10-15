@@ -127,6 +127,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 return;
             }
             onAdClosed?.Invoke(false);
+            onAdDisplay?.Invoke(false);
         }
 
         IEnumerator CoTimeoutLoadInterstitial(InterstitialAdObject interstitialAdObject)
