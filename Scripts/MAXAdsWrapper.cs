@@ -115,6 +115,20 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             onAdClosed?.Invoke(false);
         }
 
+        public void ShowInterstitial(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdDisplay, AdsManager.InterstitialDelegate onAdClosed)
+        {
+            string adUnitId = MAXAdID.GetAdID(placementType);
+            if (currentInterstitialAd != null && currentInterstitialAd.CanShow && MaxSdk.IsInterstitialReady(adUnitId))
+            {
+                currentInterstitialAd.onAdClosed = onAdClosed;
+                currentInterstitialAd.onAdDisplay = onAdDisplay;
+                MaxSdk.ShowInterstitial(adUnitId);
+                currentInterstitialAd.State = AdObjectState.Showing;
+                return;
+            }
+            onAdClosed?.Invoke(false);
+        }
+
         IEnumerator CoTimeoutLoadInterstitial(InterstitialAdObject interstitialAdObject)
         {
             var delay = new WaitForSeconds(TIMEOUT_LOADINTERAD_SEC);
@@ -176,8 +190,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         {
             QueueMainThreadExecution(() =>
             {
-                GetCurrentInterAd().State = AdObjectState.Shown;
-                onInterAdDisplayedEvent?.Invoke(GetCurrentInterAd().AdPlacementType, adInfo);
+                var currentAd = GetCurrentInterAd();
+                currentAd.State = AdObjectState.Shown;
+                currentAd.onAdDisplay?.Invoke(true);
+                onInterAdDisplayedEvent?.Invoke(currentAd.AdPlacementType, adInfo);
             });
         }
 
@@ -185,8 +201,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         {
             QueueMainThreadExecution(() =>
             {
-                GetCurrentInterAd().State = AdObjectState.ShowFailed;
-                onInterAdDisplayFailedEvent?.Invoke(GetCurrentInterAd().AdPlacementType, error);
+                var currentAd = GetCurrentInterAd();
+                currentAd.onAdDisplay?.Invoke(false);
+                currentAd.State = AdObjectState.ShowFailed;
+                onInterAdDisplayFailedEvent?.Invoke(currentAd.AdPlacementType, error);
             });
         }
 
