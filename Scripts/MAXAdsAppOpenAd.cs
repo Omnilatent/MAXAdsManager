@@ -16,7 +16,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.ErrorInfo> onAOAdLoadFailedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onAOAdRevenuePaidEvent;
 
-        public static float TIMEOUT_LOADING_APPOPENAD = 3;
+        public static float TIMEOUT_LOADING_APPOPENAD = 4;
 
         AdPlacement.Type currentAppOpenAdPlacement;
         AppOpenAdObject appOpenAdObject;
@@ -54,7 +54,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             MaxSdk.LoadAppOpenAd(adUnitId);
 
             float timer = 0;
-            while(timer < TIMEOUT_LOADING_APPOPENAD && MaxSdk.IsAppOpenAdReady(adUnitId))
+            while(timer < TIMEOUT_LOADING_APPOPENAD && !MaxSdk.IsAppOpenAdReady(adUnitId))
             {
                 yield return null;
                 timer += Time.deltaTime;
