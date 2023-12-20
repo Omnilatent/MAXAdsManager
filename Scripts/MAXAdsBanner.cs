@@ -37,10 +37,13 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
         public void ShowBanner(AdPlacement.Type placementType, BannerTransform bannerTransform, AdsManager.InterstitialDelegate onAdLoaded = null)
         {
+            Debug.Log("check show banner");
             if (currentBannerAd != null && currentBannerAd.AdPlacementType == placementType && currentBannerAd.State != AdObjectState.LoadFailed)
             {
+                Debug.Log($"currentBannerAd.AdPlacementType : {currentBannerAd.AdPlacementType}, currentBannerAd.State : {currentBannerAd.State}");
                 if (currentBannerAd.State == AdObjectState.Closed)
                 {
+                    Debug.Log("showbanner current banner ad");
                     MaxSdk.ShowBanner(MAXAdID.GetAdID(currentBannerAd.AdPlacementType));
                 }
             }
@@ -78,6 +81,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
                 // Set background or background color for banners to be fully functional
                 MaxSdk.SetBannerBackgroundColor(bannerAdUnitId, Color.black);
+                Debug.Log("Create new banner");
             }
         }
 
@@ -85,6 +89,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         {
             if (currentBannerAd != null)
             {
+                Debug.Log("Hidden banner from MaxAdsBanner");
                 MaxSdk.HideBanner(MAXAdID.GetAdID(GetCurrentBannerAd().AdPlacementType));
                 GetCurrentBannerAd().State = AdObjectState.Closed;
             }
