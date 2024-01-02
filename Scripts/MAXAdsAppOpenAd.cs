@@ -19,7 +19,6 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         AdPlacement.Type currentAppOpenAdPlacement;
         AppOpenAdObject appOpenAdObject;
 
-
         public void RequestAppOpenAd(AdPlacement.Type placementType, RewardDelegate onAdLoaded = null)
         {
             currentAppOpenAdPlacement = placementType;

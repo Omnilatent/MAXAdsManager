@@ -73,7 +73,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 currentBannerAd.State = AdObjectState.Loading;
                 string bannerAdUnitId = MAXAdID.GetAdID(placementType);
 
-                // Banners are automatically sized to 320×50 on phones and 728×90 on tablets
+                // Banners are automatically sized to 320x50 on phones and 728x90 on tablets
                 // You may call the utility method MaxSdkUtils.isTablet() to help with view sizing adjustments
                 MaxSdk.CreateBanner(bannerAdUnitId, bannerPosition);
 
@@ -88,6 +88,15 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             {
                 MaxSdk.HideBanner(MAXAdID.GetAdID(GetCurrentBannerAd().AdPlacementType));
                 GetCurrentBannerAd().State = AdObjectState.Closed;
+            }
+        }
+
+        public void DestroyBanner()
+        {
+            if (currentBannerAd != null)
+            {
+                MaxSdk.DestroyBanner(MAXAdID.GetAdID(GetCurrentBannerAd().AdPlacementType));
+                currentBannerAd = null;
             }
         }
 

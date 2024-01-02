@@ -74,6 +74,58 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             //    Manager.LoadingAnimation(false);
         }
 
+        public void RequestRewardAd(AdPlacement.Type placementType, RewardDelegate onFinish)
+        {
+            var currentAd = GetCurrentRewardAd();
+            if (currentAd.CanShow)
+            {
+                onFinish.Invoke(new RewardResult(RewardResult.Type.Loaded));
+                return;
+            }
+
+            if (currentAd.State == AdObjectState.Loading)
+            {
+                Debug.Log($"Reward ad {currentAd.AdPlacementType} is still loading.");
+                onFinish.Invoke(new RewardResult(RewardResult.Type.Loading));
+                return;
+            }
+
+            StartCoroutine(CoRequestReward(placementType, onFinish));
+        }
+        
+        IEnumerator CoRequestReward(AdPlacement.Type placementType, RewardDelegate onFinish)
+        {
+            float _timeoutRequestAds = TIMEOUT_LOADREWARDAD;
+
+            string adUnitId = MAXAdID.GetAdID(placementType);
+            MaxSdk.LoadRewardedAd(adUnitId);
+            GetCurrentRewardAd().State = AdObjectState.Loading;
+
+            float retryInterval = 0.4f;
+            WaitForSecondsRealtime delay = new WaitForSecondsRealtime(retryInterval);
+            int tryTimes = 0;
+            if (Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                _timeoutRequestAds = 3f;
+            }
+            while (!MaxSdk.IsRewardedAdReady(adUnitId) && tryTimes < _timeoutRequestAds / retryInterval)
+            {
+                yield return delay;
+                tryTimes++;
+            }
+            //.Log("reward ad available:" + (GetCurrentRewardAd().State == AdObjectState.Loading));
+
+            if (MaxSdk.IsRewardedAdReady(adUnitId))
+            {
+                GetCurrentRewardAd().State = AdObjectState.Ready;
+                onFinish.Invoke(new RewardResult(RewardResult.Type.Loaded));
+            }
+            else
+            {
+                onFinish?.Invoke(new RewardResult(RewardResult.Type.LoadFailed, "Self timeout"));
+            }
+        }
+
         public void InitializeRewardedAds()
         {
             // Attach callback
