@@ -18,6 +18,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
         AdPlacement.Type currentAppOpenAdPlacement;
         AppOpenAdObject appOpenAdObject;
+        AppOpenAdObject showingAppOpenAdObject;
 
         public void RequestAppOpenAd(AdPlacement.Type placementType, RewardDelegate onAdLoaded = null)
         {
@@ -38,9 +39,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             string adUnitId = MAXAdID.GetAdID(placementType);
             if (appOpenAdObject != null && MaxSdk.IsAppOpenAdReady(adUnitId))
             {
-                appOpenAdObject.onAdClosed = onAdClosed;
+                showingAppOpenAdObject = appOpenAdObject;
+                showingAppOpenAdObject.onAdClosed = onAdClosed;
                 MaxSdk.ShowAppOpenAd(adUnitId);
-                appOpenAdObject.State = AdObjectState.Showing;
+                showingAppOpenAdObject.State = AdObjectState.Showing;
             }
             else
                 onAdClosed?.Invoke();
@@ -79,8 +81,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         {
             QueueMainThreadExecution(() =>
             {
-                appOpenAdObject.State = AdObjectState.Closed;
-                appOpenAdObject.onAdClosed?.Invoke(true);
+                showingAppOpenAdObject.State = AdObjectState.Closed;
+                showingAppOpenAdObject.onAdClosed?.Invoke(true);
                 onAOAdHiddenEvent?.Invoke(currentAppOpenAdPlacement, arg2);
             });
         }
