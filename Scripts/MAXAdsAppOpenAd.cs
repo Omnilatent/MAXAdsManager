@@ -80,7 +80,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             QueueMainThreadExecution(() =>
             {
                 appOpenAdObject.State = AdObjectState.Closed;
-                appOpenAdObject.onAdClosed(true);
+                appOpenAdObject.onAdClosed?.Invoke(true);
                 onAOAdHiddenEvent?.Invoke(currentAppOpenAdPlacement, arg2);
             });
         }
