@@ -9,7 +9,16 @@ namespace Omnilatent.AdsMediation.MAXWrapper
     {
         [SerializeField] bool initializeAutomatically = true;
         [SerializeField] bool enableVerboseLogging = false;
-        bool initialized = false;
+
+        InitializeStatus initializeStatus = InitializeStatus.None;
+        public enum InitializeStatus
+        {
+            None, //not init yet
+            Initializing,
+            Failed,
+            Successful,
+        }
+
         InterstitialAdObject currentInterstitialAd;
 
         /// <summary>
@@ -29,6 +38,9 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         static MAXAdsWrapper instance;
         private Coroutine coTimeoutInterstitial;
 
+        public Action<MaxSdkBase.SdkConfiguration> OnInitialized;
+        private MaxSdkBase.SdkConfiguration _sdkConfiguration = null;
+
         private void Awake()
         {
             if (instance == null)
@@ -41,6 +53,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 Destroy(gameObject);
                 return;
             }
+
             if (initializeAutomatically)
             {
                 Initialize();
@@ -49,26 +62,46 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
         public void Initialize()
         {
-            if (initialized) return;
+            if (initializeStatus != InitializeStatus.None) return;
             MaxSdkCallbacks.OnSdkInitializedEvent += (MaxSdkBase.SdkConfiguration sdkConfiguration) =>
             {
                 // AppLovin SDK is initialized, start loading ads
-#if ADJUST_SDK && UNITY_IOS
+                #if ADJUST_SDK && UNITY_IOS
                 //If MAX did not ask for ATT consent then Adjust will ask for ATT consent. Otherwise, update Adjust's consent status
                 AdjustUnity.AdjustWrapper.CheckForNewAttStatus(sdkConfiguration.AppTrackingStatus == MaxSdkBase.AppTrackingStatus.NotDetermined);
-#endif
+                #endif
+                this._sdkConfiguration = sdkConfiguration;
+                initializeStatus = InitializeStatus.Successful;
             };
 
             MaxSdk.SetSdkKey(MAXAdID.SdkKey);
             MaxSdk.SetVerboseLogging(enableVerboseLogging);
             //MaxSdk.SetUserId("USER_ID");
             MaxSdk.InitializeSdk();
-            initialized = true;
+            initializeStatus = InitializeStatus.Initializing;
 
             InitializeInterstitialAdsCallbacks();
             InitializeBannerAds();
             InitializeRewardedAds();
             InitializeAOAds();
+        }
+
+        public void CheckInitialized(Action<MaxSdkBase.SdkConfiguration> callback)
+        {
+            switch (initializeStatus)
+            {
+                default:
+                case InitializeStatus.None:
+                case InitializeStatus.Initializing:
+                    MaxSdkCallbacks.OnSdkInitializedEvent += callback;
+                    break;
+                case InitializeStatus.Successful:
+                    callback?.Invoke(_sdkConfiguration);
+                    break;
+                case InitializeStatus.Failed:
+                    callback?.Invoke(null);
+                    break;
+            }
         }
 
         InterstitialAdObject GetCurrentInterAd(bool createIfNull = true)
@@ -82,16 +115,19 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                     currentInterstitialAd = new InterstitialAdObject();
                 }
             }
+
             return currentInterstitialAd;
         }
 
-        public void RequestInterstitialNoShow(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdLoaded = null, bool showLoading = true)
+        public void RequestInterstitialNoShow(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdLoaded = null,
+            bool showLoading = true)
         {
             if (currentInterstitialAd != null && currentInterstitialAd.CanShow)
             {
                 onAdLoaded?.Invoke(true);
                 return;
             }
+
             currentInterstitialAd = new InterstitialAdObject(placementType, onAdLoaded);
             currentInterstitialAd.State = AdObjectState.Loading;
             string adUnitId = MAXAdID.GetAdID(placementType);
@@ -112,6 +148,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 currentInterstitialAd.State = AdObjectState.Showing;
                 return;
             }
+
             onAdClosed?.Invoke(false);
         }
 
@@ -247,14 +284,14 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
         public static void QueueMainThreadExecution(Action action)
         {
-#if UNITY_ANDROID
+            #if UNITY_ANDROID
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
                 action.Invoke();
             });
-#else
+            #else
             action.Invoke();
-#endif
+            #endif
         }
     }
 }
