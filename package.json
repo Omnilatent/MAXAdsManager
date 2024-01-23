@@ -1,7 +1,7 @@
 {
     "name": "com.omnilatent.adsmediation.maxwrapper",
     "displayName": "Omni MAX Ads Manager Module",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "unity": "2018.1",
     "description": "Module for managing AppLovin's MAX",
     "keywords": ["ads"],
