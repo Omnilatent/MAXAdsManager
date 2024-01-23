@@ -8,3 +8,4 @@ Wrapper module for AppLovin's MAX
 # Setup
 - Add this git repo as submodule to your project or use Unity Package Manager to install this repo using GitHub link.
 - On the task bar, go to Tools/Omnilatent/Ads Manager/Import MAX Extra Package.
+- Implementation code: https://github.com/Omnilatent/MAXAdsManager/wiki/Handle-MAX-Message-1.0.2
