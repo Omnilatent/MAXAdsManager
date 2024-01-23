@@ -15,6 +15,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onAOAdHiddenEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.ErrorInfo> onAOAdLoadFailedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onAOAdRevenuePaidEvent;
+        public static Action<AdPlacement.Type> onAOAdRequestedEvent;
 
         AdPlacement.Type currentAppOpenAdPlacement;
         AppOpenAdObject appOpenAdObject;
@@ -32,6 +33,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             appOpenAdObject.State = AdObjectState.Loading;
             string adUnitId = MAXAdID.GetAdID(placementType);
             MaxSdk.LoadAppOpenAd(adUnitId);
+            onAOAdRequestedEvent?.Invoke(placementType);
         }
 
         public void ShowAppOpenAd(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdClosed = null)

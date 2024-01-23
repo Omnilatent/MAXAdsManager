@@ -13,6 +13,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onBannerAdRevenuePaidEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onBannerAdExpandedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onBannerAdCollapsedEvent;
+        public static Action<AdPlacement.Type> onBannerAdRequestedEvent;
 
         BannerAdObject currentBannerAd;
 
@@ -79,6 +80,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
                 // Set background or background color for banners to be fully functional
                 MaxSdk.SetBannerBackgroundColor(bannerAdUnitId, Color.black);
+                onBannerAdRequestedEvent?.Invoke(placementType);
             }
         }
 

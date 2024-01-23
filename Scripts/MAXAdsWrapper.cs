@@ -34,6 +34,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.ErrorInfo> onInterAdDisplayFailedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onInterAdRevenuePaidEvent;
         public static Action<AdPlacement.Type, string> onInterAdSelfTimeoutEvent; //when ad load timeout by custom duration
+        public static Action<AdPlacement.Type> onInterAdRequestedEvent;
+
 
         static MAXAdsWrapper instance;
         private Coroutine coTimeoutInterstitial;
@@ -136,6 +138,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             {
                 coTimeoutInterstitial = StartCoroutine(CoTimeoutLoadInterstitial(currentInterstitialAd));
             }
+
+            onInterAdRequestedEvent?.Invoke(placementType);
         }
 
         public void ShowInterstitial(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdClosed)

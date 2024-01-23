@@ -18,6 +18,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onRewardAdHiddenEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.ErrorInfo> onRewardAdDisplayFailedEvent;
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onRewardAdReceivedRewardEvent;
+        public static Action<AdPlacement.Type> onRewardAdRequestedEvent;
 
         RewardAdObject GetCurrentRewardAd(bool makeNewIfNull = true)
         {
@@ -46,6 +47,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             string adUnitId = MAXAdID.GetAdID(placementType);
             MaxSdk.LoadRewardedAd(adUnitId);
             GetCurrentRewardAd().State = AdObjectState.Loading;
+            onRewardAdRequestedEvent?.Invoke(placementType);
 
             float retryInterval = 0.4f;
             WaitForSecondsRealtime delay = new WaitForSecondsRealtime(retryInterval);
@@ -100,6 +102,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             string adUnitId = MAXAdID.GetAdID(placementType);
             MaxSdk.LoadRewardedAd(adUnitId);
             GetCurrentRewardAd().State = AdObjectState.Loading;
+            onRewardAdRequestedEvent?.Invoke(placementType);
 
             float retryInterval = 0.4f;
             WaitForSecondsRealtime delay = new WaitForSecondsRealtime(retryInterval);
