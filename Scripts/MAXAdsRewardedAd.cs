@@ -20,24 +20,47 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onRewardAdReceivedRewardEvent;
         public static Action<AdPlacement.Type> onRewardAdRequestedEvent;
 
-        RewardAdObject GetCurrentRewardAd(bool makeNewIfNull = true)
+        RewardAdObject GetCurrentRewardAd(bool logErrorIfNull = false)
         {
             if (currentRewardAd == null)
             {
-                Debug.LogError("currentRewardAd is null.");
-                if (makeNewIfNull)
+                if (logErrorIfNull)
                 {
-                    Debug.Log("New ad will be created");
-                    currentRewardAd = new RewardAdObject();
+                    Debug.LogError("currentRewardAd is null.");
                 }
+
+                Debug.Log("Creating new reward ad object");
+                currentRewardAd = new RewardAdObject();
             }
             return currentRewardAd;
         }
 
         public void Reward(AdPlacement.Type placementType, RewardDelegate onFinish)
         {
-            currentRewardAd = new RewardAdObject(placementType, onFinish);
-            StartCoroutine(CoReward(placementType, onFinish));
+            currentRewardAd = GetCurrentRewardAd();
+            currentRewardAd.onAdClosed = onFinish;
+            // currentRewardAd = new RewardAdObject(placementType, onFinish);
+            RequestRewardAd(placementType, loadResult =>
+            {
+                if (loadResult.type == RewardResult.Type.Loading)
+                {
+                    onFinish?.Invoke(loadResult);
+                }
+                else
+                {
+                    string adUnitId = MAXAdID.GetAdID(placementType);
+                    if (MaxSdk.IsRewardedAdReady(adUnitId))
+                    {
+                        GetCurrentRewardAd().State = AdObjectState.Showing;
+                        MaxSdk.ShowRewardedAd(adUnitId);
+                    }
+                    else
+                    {
+                        onFinish?.Invoke(loadResult);
+                    }
+                }
+            });
+            // StartCoroutine(CoReward(placementType, onFinish));
         }
 
         IEnumerator CoReward(AdPlacement.Type placementType, RewardDelegate onFinish)
@@ -102,6 +125,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             string adUnitId = MAXAdID.GetAdID(placementType);
             MaxSdk.LoadRewardedAd(adUnitId);
             GetCurrentRewardAd().State = AdObjectState.Loading;
+            GetCurrentRewardAd().onAdLoaded = OnRewardAdLoaded;
             onRewardAdRequestedEvent?.Invoke(placementType);
 
             float retryInterval = 0.4f;
@@ -118,14 +142,23 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             }
             //.Log("reward ad available:" + (GetCurrentRewardAd().State == AdObjectState.Loading));
 
-            if (MaxSdk.IsRewardedAdReady(adUnitId))
+            void OnRewardAdLoaded(RewardResult rewardResult)
             {
-                GetCurrentRewardAd().State = AdObjectState.Ready;
-                onFinish.Invoke(new RewardResult(RewardResult.Type.Loaded));
+                if (MaxSdk.IsRewardedAdReady(adUnitId))
+                {
+                    // GetCurrentRewardAd().State = AdObjectState.Ready;
+                    onFinish?.Invoke(new RewardResult(RewardResult.Type.Loaded));
+                }
+                else
+                {
+                    onFinish?.Invoke(rewardResult);
+                }
             }
-            else
+            
+            if (GetCurrentRewardAd().State == AdObjectState.Loading)
             {
                 onFinish?.Invoke(new RewardResult(RewardResult.Type.LoadFailed, "Self timeout"));
+                onFinish = null;
             }
         }
 
@@ -146,6 +179,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         {
             QueueMainThreadExecution(() =>
             {
+                GetCurrentRewardAd(logErrorIfNull: true).State = AdObjectState.Ready;
+                GetCurrentRewardAd().onAdLoaded?.Invoke(new RewardResult(RewardResult.Type.Loaded));
                 onRewardAdLoadedEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
             });
         }
@@ -154,6 +189,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         {
             QueueMainThreadExecution(() =>
             {
+                GetCurrentRewardAd(logErrorIfNull: true).State = AdObjectState.LoadFailed;
+                GetCurrentRewardAd().onAdLoaded?.Invoke(new RewardResult(RewardResult.Type.LoadFailed, errorInfo.Message));
                 onRewardAdLoadFailedEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, errorInfo);
             });
         }
@@ -181,7 +218,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             QueueMainThreadExecution(() =>
             {
                 RewardResult.Type rewardResultType = RewardResult.Type.Canceled;
-                if (GetCurrentRewardAd().State == AdObjectState.Shown)
+                if (GetCurrentRewardAd(logErrorIfNull: true).State == AdObjectState.Shown)
                 {
                     rewardResultType = RewardResult.Type.Finished;
                 }
@@ -196,7 +233,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             QueueMainThreadExecution(() =>
             {
                 //GetCurrentRewardAd().onAdClosed?.Invoke(new RewardResult(RewardResult.Type.Finished));
-                GetCurrentRewardAd().State = AdObjectState.Shown;
+                GetCurrentRewardAd(logErrorIfNull: true).State = AdObjectState.Shown;
                 onRewardAdReceivedRewardEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
             });
         }
@@ -206,7 +243,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             QueueMainThreadExecution(() =>
             {
                 // Ad revenue paid. Use this callback to track user revenue.
-                onRewardAdRevenuePaidEvent?.Invoke(GetCurrentRewardAd().AdPlacementType, adInfo);
+                onRewardAdRevenuePaidEvent?.Invoke(GetCurrentRewardAd(logErrorIfNull: true).AdPlacementType, adInfo);
             });
         }
     }
