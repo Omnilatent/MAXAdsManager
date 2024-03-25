@@ -102,6 +102,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public void RequestRewardAd(AdPlacement.Type placementType, RewardDelegate onFinish)
         {
             var currentAd = GetCurrentRewardAd();
+            currentAd.AdPlacementType = placementType;
             if (currentAd.CanShow)
             {
                 onFinish.Invoke(new RewardResult(RewardResult.Type.Loaded));
@@ -121,7 +122,6 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         IEnumerator CoRequestReward(AdPlacement.Type placementType, RewardDelegate onFinish)
         {
             float _timeoutRequestAds = TIMEOUT_LOADREWARDAD;
-
             string adUnitId = MAXAdID.GetAdID(placementType);
             MaxSdk.LoadRewardedAd(adUnitId);
             GetCurrentRewardAd().State = AdObjectState.Loading;
