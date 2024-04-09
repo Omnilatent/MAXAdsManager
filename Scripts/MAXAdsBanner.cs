@@ -5,6 +5,17 @@ using UnityEngine;
 
 namespace Omnilatent.AdsMediation.MAXWrapper
 {
+    public class MaxBannerTransform : BannerTransform
+    {
+        public bool Adaptive;
+
+        public MaxBannerTransform(AdPosition adPosition, bool adaptive)
+        {
+            this.adPosition = adPosition;
+            Adaptive = adaptive;
+        }
+    }
+
     public partial class MAXAdsWrapper : MonoBehaviour, IAdsNetworkHelper
     {
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onBannerAdLoadedEvent;
@@ -33,7 +44,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
         public void ShowBanner(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdLoaded = null)
         {
-            ShowBanner(placementType, new BannerTransform(AdPosition.Bottom), onAdLoaded);
+            ShowBanner(placementType, new MaxBannerTransform(AdPosition.Bottom, true), onAdLoaded);
         }
 
         public void ShowBanner(AdPlacement.Type placementType, BannerTransform bannerTransform, AdsManager.InterstitialDelegate onAdLoaded = null)
@@ -77,6 +88,10 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 // Banners are automatically sized to 320x50 on phones and 728x90 on tablets
                 // You may call the utility method MaxSdkUtils.isTablet() to help with view sizing adjustments
                 MaxSdk.CreateBanner(bannerAdUnitId, bannerPosition);
+
+                var maxBannerInfo = bannerTransform as MaxBannerTransform;
+                if (maxBannerInfo != null && maxBannerInfo.Adaptive)
+                    MaxSdk.SetBannerExtraParameter(bannerAdUnitId, "adaptive_banner", "true");
 
                 // Set background or background color for banners to be fully functional
                 MaxSdk.SetBannerBackgroundColor(bannerAdUnitId, Color.black);
