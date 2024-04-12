@@ -17,23 +17,50 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         public static Action<AdPlacement.Type, MaxSdkBase.AdInfo> onAOAdRevenuePaidEvent;
         public static Action<AdPlacement.Type> onAOAdRequestedEvent;
 
+        public static float TIMEOUT_LOADING_APPOPENAD = 4;
+
         AdPlacement.Type currentAppOpenAdPlacement;
         AppOpenAdObject appOpenAdObject;
         AppOpenAdObject showingAppOpenAdObject;
 
         public void RequestAppOpenAd(AdPlacement.Type placementType, RewardDelegate onAdLoaded = null)
         {
-            currentAppOpenAdPlacement = placementType;
-            if (appOpenAdObject != null && appOpenAdObject.State == AdObjectState.Ready)
+            //currentAppOpenAdPlacement = placementType;
+            //if (appOpenAdObject != null && appOpenAdObject.State == AdObjectState.Ready)
+            //{
+            //    onAdLoaded?.Invoke(new RewardResult(RewardResult.Type.Finished));
+            //    return;
+            //}
+            //appOpenAdObject = new AppOpenAdObject(placementType, onAdLoaded);
+            //appOpenAdObject.State = AdObjectState.Loading;
+            //string adUnitId = MAXAdID.GetAdID(placementType);
+            //MaxSdk.LoadAppOpenAd(adUnitId);
+            StartCoroutine(Co_RequestAppOpenAd(placementType, onAdLoaded));
+        }
+
+        private IEnumerator Co_RequestAppOpenAd(AdPlacement.Type placementType, RewardDelegate onAdLoaded = null)
+        {
+            string adUnitId = MAXAdID.GetAdID(placementType);
+            if (MaxSdk.IsAppOpenAdReady(adUnitId))
             {
                 onAdLoaded?.Invoke(new RewardResult(RewardResult.Type.Finished));
-                return;
+                yield break;
             }
+
+            currentAppOpenAdPlacement = placementType;
+
             appOpenAdObject = new AppOpenAdObject(placementType, onAdLoaded);
             appOpenAdObject.State = AdObjectState.Loading;
-            string adUnitId = MAXAdID.GetAdID(placementType);
+
             MaxSdk.LoadAppOpenAd(adUnitId);
-            onAOAdRequestedEvent?.Invoke(placementType);
+
+            float timer = 0;
+            while(timer < TIMEOUT_LOADING_APPOPENAD && !MaxSdk.IsAppOpenAdReady(adUnitId))
+            {
+                yield return null;
+                timer += Time.deltaTime;
+            }
+            onAdLoaded?.Invoke(MaxSdk.IsAppOpenAdReady(adUnitId) ? new RewardResult(RewardResult.Type.Finished) : new RewardResult(RewardResult.Type.Loading));
         }
 
         public void ShowAppOpenAd(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdClosed = null)
