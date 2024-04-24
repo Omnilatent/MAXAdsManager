@@ -90,14 +90,19 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             }
         }
 
+        [System.Obsolete("Use ShowBanner(AdPlacement.Type, BannerTransform, BannerManager.BannerLoadDelegate) instead.")]
         public void ShowBanner(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdLoaded = null)
         {
-            ShowBanner(placementType, new MaxBannerTransform(AdPosition.Bottom, true), onAdLoaded);
+            var bannerAdObject = GetCachedBannerObject(placementType);
+            ShowBanner(placementType, new MaxBannerTransform(AdPosition.Bottom, true), ref bannerAdObject,  (success, adObject) => { onAdLoaded?.Invoke(success); });
         }
-
+        
+        [System.Obsolete("Use ShowBanner(AdPlacement.Type, BannerTransform, BannerManager.BannerLoadDelegate) instead.")]
         public void ShowBanner(AdPlacement.Type placementType, BannerTransform bannerTransform, AdsManager.InterstitialDelegate onAdLoaded = null)
         {
-            if (currentBannerAd != null && currentBannerAd.AdPlacementType == placementType && currentBannerAd.State != AdObjectState.LoadFailed)
+            var bannerAdObject = GetCachedBannerObject(placementType);
+            ShowBanner(placementType, bannerTransform, ref bannerAdObject, (success, adObject) => { onAdLoaded?.Invoke(success); });
+            /*if (currentBannerAd != null && currentBannerAd.AdPlacementType == placementType && currentBannerAd.State != AdObjectState.LoadFailed)
             {
                 if (currentBannerAd.State == AdObjectState.Closed)
                 {
@@ -139,7 +144,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
                 // Set background or background color for banners to be fully functional
                 MaxSdk.SetBannerBackgroundColor(bannerAdUnitId, Color.black);
-            }
+            }*/
         }
 
         public void ShowBanner(AdPlacement.Type placementType, BannerTransform bannerTransform, ref BannerAdObject bannerAdObject, BannerLoadDelegate onAdLoaded = null)
@@ -273,6 +278,13 @@ namespace Omnilatent.AdsMediation.MAXWrapper
         private void OnBannerAdCollapsedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
             onBannerAdCollapsedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, adInfo);
+        }
+        
+        private static BannerAdObject GetCachedBannerObject(AdPlacement.Type placementType)
+        {
+            BannerAdObject adObject =
+                AdsManager.GetBannerManager().GetCachedBannerObject(placementType, CustomMediation.AD_NETWORK.AppLovinMAX);
+            return adObject;
         }
     }
 }
