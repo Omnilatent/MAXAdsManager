@@ -118,7 +118,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
 
             StartCoroutine(CoRequestReward(placementType, onFinish));
         }
-        
+
         IEnumerator CoRequestReward(AdPlacement.Type placementType, RewardDelegate onFinish)
         {
             float _timeoutRequestAds = TIMEOUT_LOADREWARDAD;
@@ -159,6 +159,26 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             {
                 onFinish?.Invoke(new RewardResult(RewardResult.Type.LoadFailed, "Self timeout"));
                 onFinish = null;
+            }
+        }
+        
+        public void ShowRewardAd(AdPlacement.Type placementType, RewardDelegate onFinish)
+        {
+            string adUnitId = MAXAdID.GetAdID(placementType);
+            if (MaxSdk.IsRewardedAdReady(adUnitId))
+            {
+                GetCurrentRewardAd().onAdClosed = onFinish;
+                GetCurrentRewardAd().State = AdObjectState.Showing;
+                MaxSdk.ShowRewardedAd(adUnitId);
+            }
+            else if (currentRewardAd != null && currentRewardAd.State == AdObjectState.Loading)
+            {
+                Debug.Log($"Reward ad {placementType} is still loading.");
+                onFinish?.Invoke(new RewardResult(RewardResult.Type.Loading));
+            }
+            else
+            {
+                onFinish?.Invoke(new RewardResult(RewardResult.Type.LoadFailed, "No reward ads is available."));
             }
         }
 
