@@ -42,6 +42,54 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             return currentBannerAd;
         }
 
+        public void RequestBanner(AdPlacement.Type placementType, BannerTransform bannerTransform, ref BannerAdObject bannerAdObject,
+            BannerLoadDelegate onAdLoaded = null)
+        {
+            if (currentBannerAd != null && currentBannerAd.AdPlacementType == placementType && currentBannerAd.State != AdObjectState.LoadFailed)
+            {
+                if (currentBannerAd.State == AdObjectState.Closed)
+                {
+                    onAdLoaded?.Invoke(true, currentBannerAd);
+                    MaxSdk.ShowBanner(MAXAdID.GetAdID(currentBannerAd.AdPlacementType));
+                }
+            }
+            else
+            {
+                MaxSdkBase.BannerPosition bannerPosition = MaxSdkBase.BannerPosition.BottomCenter;
+                switch (bannerTransform.adPosition)
+                {
+                    case AdPosition.Top:
+                        bannerPosition = MaxSdkBase.BannerPosition.TopCenter;
+                        break;
+                    case AdPosition.TopLeft:
+                        bannerPosition = MaxSdkBase.BannerPosition.TopLeft;
+                        break;
+                    case AdPosition.TopRight:
+                        bannerPosition = MaxSdkBase.BannerPosition.TopRight;
+                        break;
+                    case AdPosition.BottomLeft:
+                        bannerPosition = MaxSdkBase.BannerPosition.BottomLeft;
+                        break;
+                    case AdPosition.BottomRight:
+                        bannerPosition = MaxSdkBase.BannerPosition.BottomRight;
+                        break;
+                    case AdPosition.Center:
+                        bannerPosition = MaxSdkBase.BannerPosition.Centered;
+                        break;
+                }
+                currentBannerAd = new BannerAdObject(placementType, (success, adObject) => { onAdLoaded?.Invoke(success, currentBannerAd); });
+                currentBannerAd.State = AdObjectState.Loading;
+                string bannerAdUnitId = MAXAdID.GetAdID(placementType);
+
+                // Banners are automatically sized to 320x50 on phones and 728x90 on tablets
+                // You may call the utility method MaxSdkUtils.isTablet() to help with view sizing adjustments
+                MaxSdk.CreateBanner(bannerAdUnitId, bannerPosition);
+
+                // Set background or background color for banners to be fully functional
+                MaxSdk.SetBannerBackgroundColor(bannerAdUnitId, Color.black);
+            }
+        }
+
         public void ShowBanner(AdPlacement.Type placementType, AdsManager.InterstitialDelegate onAdLoaded = null)
         {
             ShowBanner(placementType, new MaxBannerTransform(AdPosition.Bottom, true), onAdLoaded);
@@ -81,7 +129,56 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                         bannerPosition = MaxSdkBase.BannerPosition.Centered;
                         break;
                 }
+                currentBannerAd = new BannerAdObject(placementType, (success, adObject) => { onAdLoaded?.Invoke(success); });
+                currentBannerAd.State = AdObjectState.Loading;
+                string bannerAdUnitId = MAXAdID.GetAdID(placementType);
+
+                // Banners are automatically sized to 320x50 on phones and 728x90 on tablets
+                // You may call the utility method MaxSdkUtils.isTablet() to help with view sizing adjustments
+                MaxSdk.CreateBanner(bannerAdUnitId, bannerPosition);
+
+                // Set background or background color for banners to be fully functional
+                MaxSdk.SetBannerBackgroundColor(bannerAdUnitId, Color.black);
+            }
+        }
+
+        public void ShowBanner(AdPlacement.Type placementType, BannerTransform bannerTransform, ref BannerAdObject bannerAdObject, BannerLoadDelegate onAdLoaded = null)
+        {
+            if (currentBannerAd != null && currentBannerAd.AdPlacementType == placementType && currentBannerAd.State != AdObjectState.LoadFailed)
+            {
+                if (currentBannerAd.State == AdObjectState.Closed)
+                {
+                    bannerAdObject = currentBannerAd;
+                    onAdLoaded?.Invoke(true, currentBannerAd);
+                    MaxSdk.ShowBanner(MAXAdID.GetAdID(currentBannerAd.AdPlacementType));
+                }
+            }
+            else
+            {
+                MaxSdkBase.BannerPosition bannerPosition = MaxSdkBase.BannerPosition.BottomCenter;
+                switch (bannerTransform.adPosition)
+                {
+                    case AdPosition.Top:
+                        bannerPosition = MaxSdkBase.BannerPosition.TopCenter;
+                        break;
+                    case AdPosition.TopLeft:
+                        bannerPosition = MaxSdkBase.BannerPosition.TopLeft;
+                        break;
+                    case AdPosition.TopRight:
+                        bannerPosition = MaxSdkBase.BannerPosition.TopRight;
+                        break;
+                    case AdPosition.BottomLeft:
+                        bannerPosition = MaxSdkBase.BannerPosition.BottomLeft;
+                        break;
+                    case AdPosition.BottomRight:
+                        bannerPosition = MaxSdkBase.BannerPosition.BottomRight;
+                        break;
+                    case AdPosition.Center:
+                        bannerPosition = MaxSdkBase.BannerPosition.Centered;
+                        break;
+                }
                 currentBannerAd = new BannerAdObject(placementType, onAdLoaded);
+                bannerAdObject = currentBannerAd;
                 currentBannerAd.State = AdObjectState.Loading;
                 string bannerAdUnitId = MAXAdID.GetAdID(placementType);
 
@@ -108,6 +205,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             }
         }
 
+        public void HideBanner(AdPlacement.Type placementType) { HideBanner(); }
+
         public void DestroyBanner()
         {
             if (currentBannerAd != null)
@@ -116,7 +215,9 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 currentBannerAd = null;
             }
         }
-
+        
+        public void DestroyBanner(AdPlacement.Type placementType) { DestroyBanner(); }
+        
         public void InitializeBannerAds()
         {
             MaxSdkCallbacks.Banner.OnAdLoadedEvent += OnBannerAdLoadedEvent;
@@ -134,7 +235,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 if (GetCurrentBannerAd().State != AdObjectState.Closed)
                 {
                     GetCurrentBannerAd().State = AdObjectState.Showing;
-                    GetCurrentBannerAd().onAdLoaded?.Invoke(true);
+                    GetCurrentBannerAd().onAdLoaded?.Invoke(true, GetCurrentBannerAd());
                     MaxSdk.ShowBanner(MAXAdID.GetAdID(GetCurrentBannerAd().AdPlacementType));
                 }
                 onBannerAdLoadedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, adInfo);
@@ -148,7 +249,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 if (GetCurrentBannerAd().State != AdObjectState.LoadFailed) //this check is required because AppLovin is calling this method too many times
                 {
                     GetCurrentBannerAd().State = AdObjectState.LoadFailed;
-                    GetCurrentBannerAd().onAdLoaded?.Invoke(false);
+                    GetCurrentBannerAd().onAdLoaded?.Invoke(false, GetCurrentBannerAd());
                     onBannerAdLoadFailedEvent?.Invoke(GetCurrentBannerAd().AdPlacementType, errorInfo);
                 }
             });
