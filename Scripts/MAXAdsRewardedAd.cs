@@ -158,6 +158,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             if (GetCurrentRewardAd().State == AdObjectState.Loading)
             {
                 onFinish?.Invoke(new RewardResult(RewardResult.Type.LoadFailed, "Self timeout"));
+                var info = new MaxSdkBase.ErrorInfo(new Dictionary<string, object> { { "errorMessage", "Self timeout" } });
+                OnRewardedAdLoadFailedEvent(adUnitId, info);
                 onFinish = null;
             }
         }
