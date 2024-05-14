@@ -49,6 +49,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
             {
                 if (currentBannerAd.State == AdObjectState.Closed)
                 {
+                    bannerAdObject = currentBannerAd;
                     onAdLoaded?.Invoke(true, currentBannerAd);
                     MaxSdk.ShowBanner(MAXAdID.GetAdID(currentBannerAd.AdPlacementType));
                 }
@@ -78,6 +79,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                         break;
                 }
                 currentBannerAd = new BannerAdObject(placementType, (success, adObject) => { onAdLoaded?.Invoke(success, currentBannerAd); });
+                bannerAdObject = currentBannerAd;
                 currentBannerAd.State = AdObjectState.Loading;
                 string bannerAdUnitId = MAXAdID.GetAdID(placementType);
 
