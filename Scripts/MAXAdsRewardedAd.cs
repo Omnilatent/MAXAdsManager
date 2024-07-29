@@ -154,8 +154,8 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                     onFinish?.Invoke(rewardResult);
                 }
             }
-            
-            if (GetCurrentRewardAd().State == AdObjectState.Loading)
+
+            if (!MaxSdk.IsRewardedAdReady(adUnitId))
             {
                 onFinish?.Invoke(new RewardResult(RewardResult.Type.LoadFailed, "Self timeout"));
                 var info = new MaxSdkBase.ErrorInfo(new Dictionary<string, object> { { "errorMessage", "Self timeout" } });
@@ -163,7 +163,7 @@ namespace Omnilatent.AdsMediation.MAXWrapper
                 onFinish = null;
             }
         }
-        
+
         public void ShowRewardAd(AdPlacement.Type placementType, RewardDelegate onFinish)
         {
             string adUnitId = MAXAdID.GetAdID(placementType);
